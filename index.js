@@ -23,38 +23,61 @@ app.get("/feed", async (req, res) => {
         params = products.nextPageParameters;
       } catch (error) {
         console.error("Error fetching products:", error);
-
         continue;
       }
     } while (params !== undefined);
-    const transformedData = jsonProducts.map((product) => ({
-      id: product.id,
-      mpn: product.variants[0].sku,
-      title: product.title,
-      item_group_id: product.variants[0].sku,
-      link: `https://daytonahelmets.com/products/${product.handle}`,
-      MSRP: product.variants[0].price,
-      wholesale_price: "",
-      image_link: product.image ? product.image.src : "",
-      other_image_url1: "",
-      other_image_url2: "",
-      other_image_url3: "",
-      other_image_url4: "",
-      other_image_url5: "",
-      other_image_url6: "",
-      other_image_url7: "",
-      other_image_url8: "",
-      product_type: product.product_type,
-      brand: product.vendor,
-      availability:
-        product.variants[0].inventory_quantity > 0
-          ? "in stock"
-          : "out of stock",
-      qty_on_hand: product.variants[0].inventory_quantity,
-      shipping_weight: product.variants[0].weight,
-      description: product.body_html,
-      upc_code: product.variants[0].barcode,
-    }));
+
+    let transformedData = [];
+
+    // Iterate through each product
+    jsonProducts.forEach((product) => {
+      // Check if the product has variants
+      if (product.variants && product.variants.length > 0) {
+        // Iterate through each variant of the product
+        product.variants.forEach((variant) => {
+          const titleWithoutSize = product.title.replace(/(\s+\w+)$/, ""); // Remove the last word (size)
+          const variantData = {
+            id: product.id,
+            title: `${titleWithoutSize}`,
+            description: product.body_html,
+            price: variant.price,
+            availability:
+              variant.inventory_quantity > 0 ? "in stock" : "out of stock",
+            link: `https://daytonahelmets.com/products/${product.handle}`,
+            image_link: product.image ? product.image.src : "",
+            condition: "new", // Assuming all products are new
+            brand: product.vendor,
+            mpn: variant.sku,
+            qty_on_hand: variant.inventory_quantity,
+            shipping_weight: variant.weight,
+            product_type: product.product_type,
+          };
+          transformedData.push(variantData);
+        });
+      } else {
+        // If no variants, add the product without variant title
+        const productData = {
+          id: product.id,
+          title: product.title,
+          description: product.body_html,
+          price: product.variants[0].price,
+          availability:
+            product.variants[0].inventory_quantity > 0
+              ? "in stock"
+              : "out of stock",
+          link: `https://daytonahelmets.com/products/${product.handle}`,
+          image_link: product.image ? product.image.src : "",
+          condition: "new", // Assuming all products are new
+          brand: product.vendor,
+          mpn: product.variants[0].sku,
+          qty_on_hand: product.variants[0].inventory_quantity,
+          shipping_weight: product.variants[0].weight,
+          product_type: product.product_type,
+        };
+        transformedData.push(productData);
+      }
+    });
+
     // Convert to CSV
     const csvData = json2csv(transformedData);
 
