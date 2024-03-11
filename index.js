@@ -35,7 +35,7 @@ app.get("/feed", async (req, res) => {
       if (product.variants && product.variants.length > 0) {
         // Iterate through each variant of the product
         product.variants.forEach((variant) => {
-          const titleWithoutSize = product.title.replace(/(\s+\w+)$/, ""); // Remove the last word (size)
+          const titleWithoutSize = product.title.replace(/-\s*\w+\s*$/, ""); // Remove the last word (size)
           const variantData = {
             id: product.id,
             title: `${titleWithoutSize}`,
